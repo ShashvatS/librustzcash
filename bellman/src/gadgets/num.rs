@@ -7,6 +7,7 @@ use crate::{ConstraintSystem, LinearCombination, SynthesisError, Variable};
 use super::Assignment;
 
 use super::boolean::{self, AllocatedBit, Boolean};
+use crate::Index::{Input, Aux};
 
 pub struct AllocatedNum<E: ScalarEngine> {
     value: Option<E::Fr>,
@@ -360,6 +361,7 @@ impl<E: ScalarEngine> AllocatedNum<E> {
     }
 }
 
+#[derive(Clone)]
 pub struct Num<E: ScalarEngine> {
     value: Option<E::Fr>,
     lc: LinearCombination<E>,
@@ -405,6 +407,76 @@ impl<E: ScalarEngine> Num<E> {
         Num {
             value: newval,
             lc: self.lc + &bit.lc(one, coeff),
+        }
+    }
+
+    pub fn multiply(&self, mul: E::Fr) -> Self {
+        let lc = LinearCombination::zero() + (mul, &self.lc);
+        let value = match &self.value {
+            Some(val) => {
+                let mut val: E::Fr = val.clone();
+                val.mul_assign(&mul);
+                Some(val)
+            }
+            _ => None
+        };
+
+        Num {
+            value,
+            lc
+        }
+    }
+
+    pub fn simplify(&mut self) {
+        let mut v: Vec<(Variable, E::Fr)> = vec![];
+
+        for (var, coeff) in &self.lc.0 {
+            let mut reach_end = true;
+            for i in 0..v.len() {
+                match (var.0, (v[i].0).0) {
+                    (Input(a), Input(b)) => {
+                        if a == b {
+                            v[i].1.add_assign(&coeff);
+                            reach_end = false;
+                            break;
+                        }
+                    },
+                    (Aux(a), Aux(b)) => {
+                        if a == b {
+                            v[i].1.add_assign(&coeff);
+                            reach_end = false;
+                            break;
+                        }
+                    },
+                    _ => {}
+                }
+
+            }
+            if reach_end {
+                v.push((var.clone(), coeff.clone()));
+            }
+        }
+
+        self.lc = LinearCombination(v);
+    }
+}
+
+impl<E: ScalarEngine> std::ops::Add for Num<E> {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        let value = match (self.value, rhs.value) {
+            (Some(a), Some(b)) => {
+                let mut a: E::Fr = a.clone();
+                a.add_assign(&b);
+                Some(b)
+            }
+            _ => None
+        };
+
+        Num {
+            value: None,
+            lc: self.lc.clone() + &rhs.lc
         }
     }
 }
