@@ -18,6 +18,7 @@ use crate::multiexp::{multiexp, DensityTracker, FullDensity};
 
 use crate::multicore::Worker;
 use crate::groth16::ProofKernel;
+use std::time::Instant;
 
 fn eval<E: Engine>(
     lc: &LinearCombination<E>,
@@ -730,6 +731,8 @@ pub fn finish_proof<E, C, P: ParameterSource<E>>(
     let worker = Worker::new();
     let vk = params.get_vk(prover.input_assignment.len())?;
     let h = {
+        let start = Instant::now();
+
         let mut a = EvaluationDomain::from_coeffs(prover.a)?;
         let mut b = EvaluationDomain::from_coeffs(prover.b)?;
         let mut c = EvaluationDomain::from_coeffs(prover.c)?;
@@ -751,6 +754,8 @@ pub fn finish_proof<E, C, P: ParameterSource<E>>(
         a.truncate(a_len);
         // TODO: parallelize if it's even helpful
         let a = Arc::new(a.into_iter().map(|s| s.0.into_repr()).collect::<Vec<_>>());
+
+        println!("time to fft: {}", start.elapsed().as_millis());
 
         multiexp(&worker, params.get_h(a.len())?, FullDensity, a)
     };
@@ -774,6 +779,7 @@ pub fn finish_proof<E, C, P: ParameterSource<E>>(
 //            .collect::<Vec<_>>(),
 //    );
 
+    let start = Instant::now();
     let input_assignment = Arc::new(
         prover.input_assignment.into_iter().zip(kernel.input.as_slice().into_iter()).map(|s| {
             let mut p = s.0;
@@ -791,6 +797,8 @@ pub fn finish_proof<E, C, P: ParameterSource<E>>(
             p.into_repr()
         }).collect::<Vec<_>>()
     );
+
+    println!("time to subtract: {}", start.elapsed().as_millis());
 
     let l = multiexp(
         &worker,
