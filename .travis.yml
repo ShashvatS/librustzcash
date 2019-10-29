@@ -1,6 +1,6 @@
 language: rust
 rust:
-  - 1.36.0
+  - 1.37.0
 
 addons:
   apt:
@@ -14,8 +14,8 @@ before_script:
   - rustup component add rustfmt
 
 script:
-  - cargo fmt --all -- --check
   - cargo build --verbose --release --all
+  - cargo fmt --all -- --check
   - cargo test --verbose --release --all
   - cargo test --verbose --release --all -- --ignored
 
