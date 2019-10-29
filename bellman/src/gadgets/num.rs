@@ -469,13 +469,13 @@ impl<E: ScalarEngine> std::ops::Add for Num<E> {
             (Some(a), Some(b)) => {
                 let mut a: E::Fr = a.clone();
                 a.add_assign(&b);
-                Some(b)
+                Some(a)
             }
             _ => None
         };
 
         Num {
-            value: None,
+            value,
             lc: self.lc.clone() + &rhs.lc
         }
     }
