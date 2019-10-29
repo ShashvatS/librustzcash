@@ -4,6 +4,7 @@
 
 use group::{CurveAffine, EncodedPoint};
 use pairing::{Engine, PairingCurveAffine};
+use ff::PrimeField;
 
 use crate::SynthesisError;
 
@@ -22,12 +23,23 @@ mod verifier;
 pub use self::generator::*;
 pub use self::prover::*;
 pub use self::verifier::*;
+use ff::ScalarEngine;
 
 #[derive(Clone)]
 pub struct Proof<E: Engine> {
     pub a: E::G1Affine,
     pub b: E::G2Affine,
     pub c: E::G1Affine,
+}
+
+#[derive(Clone)]
+pub struct ProofKernel<E: Engine + ScalarEngine> {
+    pub input: Arc<Vec<<E::Fr as PrimeField>::Repr>>,
+    pub aux: Arc<Vec<<E::Fr as PrimeField>::Repr>>,
+    pub a: E::G1,
+    pub b1: E::G1,
+    pub b2: E::G2,
+    pub c: E::G1,
 }
 
 impl<E: Engine> PartialEq for Proof<E> {
