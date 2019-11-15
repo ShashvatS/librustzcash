@@ -6,11 +6,15 @@
 //! [`CpuPool`]: futures_cpupool::CpuPool
 
 #[cfg(feature = "multicore")]
-mod implementation {
+pub mod implementation {
     use crossbeam::{self, thread::Scope};
     use futures::{Future, IntoFuture, Poll};
     use futures_cpupool::{CpuFuture, CpuPool};
     use num_cpus;
+    use std::sync::atomic::{AtomicUsize, Ordering, AtomicBool};
+
+    static NUM_CPUS: AtomicUsize = AtomicUsize::new(12);
+    static HAS_LOADED: AtomicBool = AtomicBool::new(false);
 
     #[derive(Clone)]
     pub struct Worker {
@@ -30,7 +34,11 @@ mod implementation {
         }
 
         pub fn new() -> Worker {
-            Self::new_with_cpus(num_cpus::get())
+            if !HAS_LOADED.load(Ordering::SeqCst) {
+                NUM_CPUS.store(num_cpus::get(), Ordering::SeqCst);
+            }
+
+            Self::new_with_cpus(NUM_CPUS.load(Ordering::SeqCst))
         }
 
         pub fn log_num_cpus(&self) -> u32 {

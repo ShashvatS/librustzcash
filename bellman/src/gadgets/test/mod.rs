@@ -294,6 +294,8 @@ impl<E: ScalarEngine> TestConstraintSystem<E> {
         self.inputs.len()
     }
 
+    pub fn num_aux(&self) -> usize { self.aux.len() }
+
     pub fn get_input(&mut self, index: usize, path: &str) -> E::Fr {
         let (assignment, name) = self.inputs[index].clone();
 
