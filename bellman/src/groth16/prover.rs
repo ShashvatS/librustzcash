@@ -755,7 +755,7 @@ pub fn finish_proof<E, C, P: ParameterSource<E>>(
         // TODO: parallelize if it's even helpful
         let a = Arc::new(a.into_iter().map(|s| s.0.into_repr()).collect::<Vec<_>>());
 
-        println!("time to fft: {}", start.elapsed().as_millis());
+//        println!("time to fft: {}", start.elapsed().as_millis());
 
         multiexp(&worker, params.get_h(a.len())?, FullDensity, a)
     };
@@ -798,7 +798,7 @@ pub fn finish_proof<E, C, P: ParameterSource<E>>(
         }).collect::<Vec<_>>()
     );
 
-    println!("time to subtract: {}", start.elapsed().as_millis());
+//    println!("time to subtract: {}", start.elapsed().as_millis());
 
     let l = multiexp(
         &worker,
