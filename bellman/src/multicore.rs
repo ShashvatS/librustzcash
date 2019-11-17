@@ -13,8 +13,8 @@ pub mod implementation {
     use num_cpus;
     use std::sync::atomic::{AtomicUsize, Ordering, AtomicBool};
 
-    static NUM_CPUS: AtomicUsize = AtomicUsize::new(12);
-    static HAS_LOADED: AtomicBool = AtomicBool::new(false);
+    pub static NUM_CPUS: AtomicUsize = AtomicUsize::new(12);
+    pub static HAS_LOADED: AtomicBool = AtomicBool::new(false);
 
     #[derive(Clone)]
     pub struct Worker {
@@ -36,6 +36,7 @@ pub mod implementation {
         pub fn new() -> Worker {
             if !HAS_LOADED.load(Ordering::SeqCst) {
                 NUM_CPUS.store(num_cpus::get(), Ordering::SeqCst);
+                HAS_LOADED.store(true, Ordering::SeqCst)
             }
 
             Self::new_with_cpus(NUM_CPUS.load(Ordering::SeqCst))
